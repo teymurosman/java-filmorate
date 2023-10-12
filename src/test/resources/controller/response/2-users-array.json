@@ -1,0 +1,14 @@
+[
+  {
+    "email": "user@email.com",
+    "login": "userLogin",
+    "name": "User Name",
+    "birthday": "2000-12-13"
+  },
+  {
+    "email": "user@email.com",
+    "login": "userLogin",
+    "name": "User Name",
+    "birthday": "2000-12-13"
+  }
+]
