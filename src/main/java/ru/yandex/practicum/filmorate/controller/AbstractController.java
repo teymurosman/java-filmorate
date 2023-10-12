@@ -14,6 +14,7 @@ public abstract class AbstractController<T extends AbstractEntity> {
     public List<T> getAll() {
         return List.copyOf(storage.values());
     }
+
     public T create(T data) {
         data.setId(++idCounter);
         storage.put(data.getId(), data);
