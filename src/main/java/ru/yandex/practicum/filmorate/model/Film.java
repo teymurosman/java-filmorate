@@ -20,7 +20,7 @@ public class Film extends AbstractEntity {
     @NotBlank
     private String name;
 
-    @Size(max = 200)
+    @Size(min = 1, max = 200)
     private String description;
 
     @FilmReleaseDate

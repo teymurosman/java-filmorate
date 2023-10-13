@@ -14,7 +14,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class User extends AbstractEntity {
 
-    @NotBlank
     @Email
     private String email;
 
