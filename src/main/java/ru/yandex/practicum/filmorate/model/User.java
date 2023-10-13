@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class User extends AbstractEntity {
 
-    @Email
+    @Email(regexp = ".+[@].+[\\.].+")
     private String email;
 
     @NotBlank
