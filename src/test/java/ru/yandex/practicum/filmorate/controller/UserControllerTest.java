@@ -8,16 +8,15 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.util.NestedServletException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -137,12 +136,134 @@ class UserControllerTest {
     public void updateNotExistingUser() throws Exception {
         createStandardCase();
 
-        assertThrows(NestedServletException.class,
-                () -> mockMvc.perform(
-                                put(PATH)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(readFromFile("controller/request/user-updated-wrong-id.json")))
-                        .andExpect(status().is5xxServerError()));
+        mockMvc.perform(put(PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(readFromFile("controller/request/user-updated-wrong-id.json")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void getUserByIdStandardCase() throws Exception {
+        createStandardCase();
+
+        mockMvc.perform(get(PATH + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/user.json")));
+    }
+
+    @Test
+    public void getUserByWrongId() throws Exception {
+        createStandardCase();
+
+        mockMvc.perform(get(PATH + "/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void addFriendStandardCase() throws Exception {
+        createStandardCase();
+        createStandardCase();
+
+        mockMvc.perform(put(PATH + "/1/friends/2"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/user-id-1-friend-user-id-2.json")));
+    }
+
+    @Test
+    public void addFriendWithWrongId() throws Exception {
+        createStandardCase();
+        createStandardCase();
+
+        mockMvc.perform(put(PATH + "/9999/friends/2"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void addFriendWithWrongFriendId() throws Exception {
+        createStandardCase();
+        createStandardCase();
+
+        mockMvc.perform(put(PATH + "/1/friends/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void deleteFriendStandardCase() throws Exception {
+        addFriendStandardCase();
+
+        mockMvc.perform(delete(PATH + "/1/friends/2"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/user.json")));
+    }
+
+    @Test
+    public void deleteFriendWithWrongId() throws Exception {
+        addFriendStandardCase();
+
+        mockMvc.perform(delete(PATH + "/9999/friends/2"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void deleteFriendWithWrongFriendId() throws Exception {
+        addFriendStandardCase();
+
+        mockMvc.perform(delete(PATH + "/1/friends/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void getCommonFriendsStandardCase() throws Exception {
+        addFriendStandardCase();
+        createStandardCase();
+
+        mockMvc.perform(put(PATH + "/1/friends/3"));
+        mockMvc.perform(put(PATH + "/2/friends/3"));
+
+        mockMvc.perform(get(PATH + "/1/friends/common/2"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/user-array.json")));
+    }
+
+    @Test
+    public void getCommonFriendsEmpty() throws Exception {
+        addFriendStandardCase();
+
+        mockMvc.perform(get(PATH + "/1/friends/common/2"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/empty-array.json")));
+    }
+
+    @Test
+    public void getCommonFriendsWrongId() throws Exception {
+        addFriendStandardCase();
+
+        mockMvc.perform(get(PATH + "/9999/friends/common/2"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void getCommonFriendsWrongFriendId() throws Exception {
+        addFriendStandardCase();
+
+        mockMvc.perform(get(PATH + "/1/friends/common/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
     }
 
     private String readFromFile(String filename) {
