@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.DataNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -22,18 +21,27 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
+    public List<User> getAll() {
+        return userStorage.getAll();
+    }
+
+    public User create(User user) {
+        return userStorage.create(user);
+    }
+
+    public User update(User user) {
+        return userStorage.update(user);
+    }
+
+    public User getUserById(Long id) {
+        return userStorage.getUserById(id);
+    }
+
     public User addFriend(Long userId, Long friendId) {
-        if (userStorage.getUserById(userId) == null) {
-            throw new DataNotFoundException(String.format("Не удалось найти пользователя с id=%s.", userId));
-        }
-        if (userStorage.getUserById(friendId) == null) {
-            throw new DataNotFoundException(String.format("Не удалось найти пользователя с id=%s.", friendId));
-        }
-
         User user = userStorage.getUserById(userId);
-        user.getFriends().add(friendId);
-
         User friend = userStorage.getUserById(friendId);
+
+        user.getFriends().add(friendId);
         friend.getFriends().add(userId);
 
         return user;
@@ -41,9 +49,9 @@ public class UserService {
 
     public User deleteFriend(Long userId, Long friendId) {
         User user = userStorage.getUserById(userId);
-        user.getFriends().remove(friendId);
-
         User friend = userStorage.getUserById(friendId);
+
+        user.getFriends().remove(friendId);
         friend.getFriends().remove(userId);
 
         return user;

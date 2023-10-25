@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -16,47 +15,45 @@ import java.util.List;
 public class FilmController {
 
     private final FilmService filmService;
-    private final FilmStorage filmStorage;
 
     @Autowired
-    public FilmController(FilmService filmService, FilmStorage filmStorage) {
+    public FilmController(FilmService filmService) {
         this.filmService = filmService;
-        this.filmStorage = filmStorage;
     }
 
     @GetMapping
     public List<Film> getAll() {
-        log.info("Поступил запрос на получение списка всех фильмов");
-        return filmStorage.getAll();
+        log.info("Поступил запрос на получение списка всех фильмов.");
+        return filmService.getAll();
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        log.info("Поступил запрос на создание фильма {}", film);
-        return filmStorage.create(film);
+        log.info("Поступил запрос на создание фильма {}.", film);
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        log.info("Поступил запрос на обновление фильма {}", film);
-        return filmStorage.update(film);
+        log.info("Поступил запрос на обновление фильма {}.", film);
+        return filmService.update(film);
     }
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable Long id) {
         log.info("Поступил запрос на получение фильма с id = {}.", id);
-        return filmStorage.getFilmById(id);
+        return filmService.getFilmById(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public Film addLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Поступил запрос на добавление лайка фильму.");
+        log.info("Поступил запрос на добавление лайка фильму с id={} от userId={}.", id, userId);
         return filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public Film deleteLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Поступил запрос на удаление лайка фильма.");
+        log.info("Поступил запрос на удаление лайка фильма с id={} от userId={}.", id, userId);
         return filmService.deleteLike(id, userId);
     }
 
