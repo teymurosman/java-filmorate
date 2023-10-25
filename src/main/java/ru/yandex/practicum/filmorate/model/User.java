@@ -7,6 +7,8 @@ import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,4 +27,6 @@ public class User extends AbstractEntity {
 
     @PastOrPresent
     private LocalDate birthday;
+
+    private final Set<Long> friends = new HashSet<>();
 }

@@ -1,0 +1,28 @@
+[
+  {
+    "name": "film with 3 likes",
+    "description": "it has 3 likes",
+    "releaseDate": "2013-07-23",
+    "duration": 90,
+    "likes": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "film name",
+    "description": "description of a film",
+    "releaseDate": "2010-05-13",
+    "duration": 112,
+    "likes": [
+      1
+    ]
+  },
+  {
+    "name": "film name",
+    "description": "description of a film",
+    "releaseDate": "2010-05-13",
+    "duration": 112
+  }
+]

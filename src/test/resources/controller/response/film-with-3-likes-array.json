@@ -1,0 +1,13 @@
+[
+  {
+    "name": "film with 3 likes",
+    "description": "it has 3 likes",
+    "releaseDate": "2013-07-23",
+    "duration": 90,
+    "likes": [
+      1,
+      2,
+      3
+    ]
+  }
+]
