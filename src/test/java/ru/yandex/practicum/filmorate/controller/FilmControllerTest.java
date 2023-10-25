@@ -8,16 +8,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.util.NestedServletException;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @AutoConfigureMockMvc
@@ -44,7 +45,7 @@ class FilmControllerTest {
         mockMvc.perform(post(PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(readFromFile("controller/request/film-empty-name.json")))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -52,7 +53,7 @@ class FilmControllerTest {
         mockMvc.perform(post(PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(readFromFile("controller/request/film-too-long-description.json")))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -60,7 +61,7 @@ class FilmControllerTest {
         mockMvc.perform(post(PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(readFromFile("controller/request/film-invalid-release-date.json")))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -68,7 +69,7 @@ class FilmControllerTest {
         mockMvc.perform(post(PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(readFromFile("controller/request/film-negative-duration.json")))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -76,7 +77,7 @@ class FilmControllerTest {
         mockMvc.perform(post(PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(readFromFile("controller/request/film-zero-duration.json")))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -129,12 +130,143 @@ class FilmControllerTest {
     public void updateNotExistingFilm() throws Exception {
         createStandardCase();
 
-        assertThrows(NestedServletException.class,
-                () -> mockMvc.perform(
-                                put(PATH)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(readFromFile("controller/request/film-updated-wrong-id.json")))
-                        .andExpect(status().is5xxServerError()));
+        mockMvc.perform(put(PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(readFromFile("controller/request/film-updated-wrong-id.json")))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-film-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void getFilmByIdStandardCase() throws Exception {
+        createStandardCase();
+
+        mockMvc.perform(get(PATH + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/film.json")));
+    }
+
+    @Test
+    public void getFilmByWrongId() throws Exception {
+        createStandardCase();
+
+        mockMvc.perform(get(PATH + "/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-film-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void addLikeStandardCase() throws Exception {
+        createStandardCase();
+        mockMvc.perform(post("/users") // Добавить пользователя, чтобы не было ошибки при addLike()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(readFromFile("controller/request/user.json")));
+
+        mockMvc.perform(put(PATH + "/1/like/1"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(PATH + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/film-with-like-id-1.json")));
+    }
+
+    @Test
+    public void addLikeByWrongFilmId() throws Exception {
+        createStandardCase();
+        mockMvc.perform(post("/users") // Добавить пользователя, чтобы не было ошибки при addLike()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(readFromFile("controller/request/user.json")));
+
+        mockMvc.perform(put(PATH + "/9999/like/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-film-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void addLikeByWrongUserId() throws Exception {
+        createStandardCase();
+
+        mockMvc.perform(put(PATH + "/1/like/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void deleteLikeStandardCase() throws Exception {
+        addLikeStandardCase();
+
+        mockMvc.perform(delete(PATH + "/1/like/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/film.json")));
+    }
+
+    @Test
+    public void deleteLikeByWrongFilmId() throws Exception {
+        addLikeStandardCase();
+
+        mockMvc.perform(delete(PATH + "/9999/like/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-film-not-found-id-9999.json")));
+
+        mockMvc.perform(get(PATH + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/film-with-like-id-1.json")));
+    }
+
+    @Test
+    public void deleteLikeByWrongUserId() throws Exception {
+        addLikeStandardCase();
+
+        mockMvc.perform(delete(PATH + "/1/like/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+
+        mockMvc.perform(get(PATH + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/film-with-like-id-1.json")));
+    }
+
+    @Test
+    public void getTopFilmsStandardCase() throws Exception {
+        createStandardCase();
+        mockMvc.perform(post(PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(readFromFile("controller/request/film-with-3-likes.json")))
+                .andExpect(status().isOk());
+        mockMvc.perform(post(PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(readFromFile("controller/request/film-with-like-id-1.json")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get(PATH + "/popular"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/films-popular-3-1-0-likes.json")));
+    }
+
+    @Test
+    public void getMostLikedFilm() throws Exception {
+        getTopFilmsStandardCase();
+
+        mockMvc.perform(get(PATH + "/popular?count=1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/film-with-3-likes-array.json")));
+    }
+
+    @Test
+    public void getTopFilmsAssertDefaultSizeOfParam() throws Exception {
+        for (int i = 0; i < 15; i++) {
+            createStandardCase(); // Создаем 15 фильмов
+        }
+
+        String result = mockMvc.perform(get(PATH + "/popular")) // count default = 10
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        assertEquals(10, StringUtils.countOccurrencesOf(result, "id")); // Сколько раз встречается "id"
     }
 
     private String readFromFile(String filename) {

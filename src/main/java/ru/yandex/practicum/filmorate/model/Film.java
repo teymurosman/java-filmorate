@@ -10,6 +10,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -28,4 +30,6 @@ public class Film extends AbstractEntity {
 
     @Positive
     private int duration;
+
+    private final Set<Long> likes = new HashSet<>();
 }
