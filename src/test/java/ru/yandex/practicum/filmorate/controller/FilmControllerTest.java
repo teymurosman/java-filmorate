@@ -160,6 +160,9 @@ class FilmControllerTest {
     @Test
     public void addLikeStandardCase() throws Exception {
         createStandardCase();
+        mockMvc.perform(post("/users") // Добавить пользователя, чтобы не было ошибки при addLike()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(readFromFile("controller/request/user.json")));
 
         mockMvc.perform(put(PATH + "/1/like/1"))
                 .andExpect(status().isOk());
@@ -171,11 +174,24 @@ class FilmControllerTest {
     @Test
     public void addLikeByWrongFilmId() throws Exception {
         createStandardCase();
+        mockMvc.perform(post("/users") // Добавить пользователя, чтобы не было ошибки при addLike()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(readFromFile("controller/request/user.json")));
 
         mockMvc.perform(put(PATH + "/9999/like/1"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().json(readFromFile(
                         "controller/response/error-film-not-found-id-9999.json")));
+    }
+
+    @Test
+    public void addLikeByWrongUserId() throws Exception {
+        createStandardCase();
+
+        mockMvc.perform(put(PATH + "/1/like/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
     }
 
     @Test
@@ -192,7 +208,24 @@ class FilmControllerTest {
         addLikeStandardCase();
 
         mockMvc.perform(delete(PATH + "/9999/like/1"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-film-not-found-id-9999.json")));
+
+        mockMvc.perform(get(PATH + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(readFromFile("controller/response/film-with-like-id-1.json")));
+    }
+
+    @Test
+    public void deleteLikeByWrongUserId() throws Exception {
+        addLikeStandardCase();
+
+        mockMvc.perform(delete(PATH + "/1/like/9999"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(readFromFile(
+                        "controller/response/error-user-not-found-id-9999.json")));
+
         mockMvc.perform(get(PATH + "/1"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(readFromFile("controller/response/film-with-like-id-1.json")));
