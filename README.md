@@ -38,3 +38,17 @@ GROUP BY f.name
 ORDER BY likes_amount DESC
 LIMIT ?;
 ```
+
+#### Получение общих друзей 2 пользователей
+``` roomsql
+SELECT fr.friend_id,
+       u.login,
+       u.name
+FROM friendships AS fr
+JOIN users AS u ON fr.friend_id = u.user_id
+WHERE fr.user_id = 'some_id'
+  AND EXISTS (
+    SELECT fr2.friend_id
+    FROM friendships AS fr2
+    WHERE fr2.user_id = 'other_id');
+```
