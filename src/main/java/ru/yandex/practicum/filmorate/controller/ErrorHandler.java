@@ -24,7 +24,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handlerMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
         log.info(e.getMessage(), e);
-        return new ErrorResponse(e.getMessage());
+        return new ErrorResponse(e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
     }
 
     @ExceptionHandler
