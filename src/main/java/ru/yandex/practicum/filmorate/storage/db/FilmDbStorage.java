@@ -3,18 +3,19 @@ package ru.yandex.practicum.filmorate.storage.db;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DataNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,6 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
-    private long idCounter;
 
     @Override
     public List<Film> getAll() {
@@ -41,16 +41,20 @@ public class FilmDbStorage implements FilmStorage {
     public Film create(Film film) {
         String sql = "insert into films (name, description, release_date, duration, mpa_id) " +
                 "values (?, ?, ?, ?, ?)";
-        int rowsUpdated = jdbcTemplate.update(sql,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId());
 
-        if (rowsUpdated == 1) {
-            film.setId(++idCounter);
-        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection
+                    .prepareStatement(sql, new String[]{"film_id"});
+            ps.setString(1, film.getName());
+            ps.setString(2, film.getDescription());
+            ps.setString(3, String.valueOf(film.getReleaseDate()));
+            ps.setString(4, String.valueOf(film.getDuration()));
+            ps.setString(5, String.valueOf(film.getMpa().getId()));
+            return ps;
+        }, keyHolder);
+
+        film.setId(keyHolder.getKey().longValue());
 
         addFilmGenres(film.getId(), film.getGenres());
         return film;
@@ -110,24 +114,18 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Film mapFilm(ResultSet rs, int rowNum) throws SQLException {
-        Long filmId = rs.getLong("film_id");
-        String name = rs.getString("name");
-        String description = rs.getString("description");
-        LocalDate releaseDate = rs.getDate("release_date").toLocalDate();
-        Integer duration = rs.getInt("duration");
-        Mpa mpa = mpaStorage.getMpaById(rs.getInt("mpa_id"));
 
         Film film = Film.builder()
-                .id(filmId)
-                .name(name)
-                .description(description)
-                .releaseDate(releaseDate)
-                .duration(duration)
-                .mpa(mpa)
+                .id(rs.getLong("film_id"))
+                .name(rs.getString("name"))
+                .description(rs.getString("description"))
+                .releaseDate(rs.getDate("release_date").toLocalDate())
+                .duration(rs.getInt("duration"))
+                .mpa(mpaStorage.getMpaById(rs.getInt("mpa_id")))
                 .build();
 
-        film.getGenres().addAll(getGenresByFilmId(filmId));
-        film.getLikes().addAll(getLikesByFilmId(filmId));
+        film.getGenres().addAll(getGenresByFilmId(film.getId()));
+        film.getLikes().addAll(getLikesByFilmId(film.getId()));
 
         return film;
     }

@@ -31,12 +31,9 @@ public class GenreDbStorage implements GenreStorage {
     }
 
     private Genre mapGenre(ResultSet rs, int rowNum) throws SQLException {
-        Integer id = rs.getInt("genre_id");
-        String name = rs.getString("name");
-
         return Genre.builder()
-                .id(id)
-                .name(name)
+                .id(rs.getInt("genre_id"))
+                .name(rs.getString("name"))
                 .build();
     }
 }

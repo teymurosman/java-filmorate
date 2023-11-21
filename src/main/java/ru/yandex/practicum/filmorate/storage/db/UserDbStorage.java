@@ -3,15 +3,17 @@ package ru.yandex.practicum.filmorate.storage.db;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DataNotFoundException;
 import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,7 +23,6 @@ import java.util.stream.Collectors;
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
-    private long idCounter;
 
     @Override
     public List<User> getAll() {
@@ -39,15 +40,19 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User create(User user) {
         String sql = "insert into users (email, login, name, birthday) values (?, ?, ?, ?)";
-        int rowsUpdated = jdbcTemplate.update(sql,
-                user.getEmail(),
-                user.getLogin(),
-                user.getName(),
-                user.getBirthday());
 
-        if (rowsUpdated == 1) {
-            user.setId(++idCounter);
-        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection
+                    .prepareStatement(sql, new String[]{"user_id"});
+            ps.setString(1, user.getEmail());
+            ps.setString(2, user.getLogin());
+            ps.setString(3, user.getName());
+            ps.setString(4, String.valueOf(user.getBirthday()));
+            return ps;
+        }, keyHolder);
+
+        user.setId(keyHolder.getKey().longValue());
 
         return user;
     }
@@ -95,31 +100,22 @@ public class UserDbStorage implements UserStorage {
     }
 
     private User mapUser(ResultSet rs, int rowNum) throws SQLException {
-        Long userId = rs.getLong("user_id");
-        String email = rs.getString("email");
-        String login = rs.getString("login");
-        String name = rs.getString("name");
-        LocalDate birthday = rs.getDate("birthday").toLocalDate();
-
         User user = User.builder()
-                .id(userId)
-                .email(email)
-                .login(login)
-                .name(name)
-                .birthday(birthday)
+                .id(rs.getLong("user_id"))
+                .email(rs.getString("email"))
+                .login(rs.getString("login"))
+                .name(rs.getString("name"))
+                .birthday(rs.getDate("birthday").toLocalDate())
                 .build();
 
-        user.getFriends().addAll(getFriendsByUserId(userId));
+        user.getFriends().addAll(getFriendsByUserId(user.getId()));
         return user;
     }
 
     private Friendship mapFriendship(ResultSet rs, int rowNum) throws SQLException {
-        Long friendId = rs.getLong("friend_id");
-        boolean isConfirmed = rs.getBoolean("is_confirmed");
-
         return Friendship.builder()
-                .friendId(friendId)
-                .isConfirmed(isConfirmed)
+                .friendId(rs.getLong("friend_id"))
+                .isConfirmed(rs.getBoolean("is_confirmed"))
                 .build();
     }
 

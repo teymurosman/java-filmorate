@@ -11,5 +11,5 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class Mpa extends AbstractEntity<Integer> {
 
-    String name;
+    private String name;
 }

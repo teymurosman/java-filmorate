@@ -35,7 +35,7 @@ public class Film extends AbstractEntity<Long> {
     private int duration;
 
     @NotNull(message = "рейтинг MPA не может быть пустым")
-    Mpa mpa;
+    private Mpa mpa;
 
     private final Set<Long> likes = new HashSet<>();
 

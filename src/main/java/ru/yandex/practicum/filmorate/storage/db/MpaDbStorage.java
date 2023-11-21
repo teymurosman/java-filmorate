@@ -31,12 +31,9 @@ public class MpaDbStorage implements MpaStorage {
     }
 
     private Mpa mapMpa(ResultSet rs, int rowNum) throws SQLException {
-        Integer id = rs.getInt("mpa_id");
-        String name = rs.getString("name");
-
         return Mpa.builder()
-                .id(id)
-                .name(name)
+                .id(rs.getInt("mpa_id"))
+                .name(rs.getString("name"))
                 .build();
     }
 }
