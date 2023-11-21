@@ -79,10 +79,10 @@ public class UserDbStorage implements UserStorage {
 
 //        Update
         Map<Long, Boolean> statusesBeforeUpdate = friendshipsBeforeUpdate.stream()
-                        .collect(Collectors.toMap(Friendship::getFriend_id, Friendship::isConfirmed));
+                        .collect(Collectors.toMap(Friendship::getFriendId, Friendship::isConfirmed));
         Set<Friendship> friendshipsToUpdate = newFriendships.stream()
                 .filter(friendshipsBeforeUpdate::contains)
-                .filter(f -> f.isConfirmed() != statusesBeforeUpdate.get(f.getFriend_id()))
+                .filter(f -> f.isConfirmed() != statusesBeforeUpdate.get(f.getFriendId()))
                 .collect(Collectors.toSet());
         updateFriendshipsStatuses(userId, friendshipsToUpdate);
 
@@ -118,7 +118,7 @@ public class UserDbStorage implements UserStorage {
         boolean isConfirmed = rs.getBoolean("is_confirmed");
 
         return Friendship.builder()
-                .friend_id(friendId)
+                .friendId(friendId)
                 .isConfirmed(isConfirmed)
                 .build();
     }
@@ -131,21 +131,21 @@ public class UserDbStorage implements UserStorage {
     private void addFriendships(Long userId, Set<Friendship> friendships) {
         String sql = "insert into friendships (user_id, friend_id, is_confirmed) values (?, ?, ?)";
         for (Friendship friendship : friendships) {
-            jdbcTemplate.update(sql, userId, friendship.getFriend_id(), friendship.isConfirmed());
+            jdbcTemplate.update(sql, userId, friendship.getFriendId(), friendship.isConfirmed());
         }
     }
 
     private void deleteFriendships(Long userId, Set<Friendship> friendships) {
         String sql = "delete from friendships where user_id = ? and friend_id = ?";
         for (Friendship friendship : friendships) {
-            jdbcTemplate.update(sql, userId, friendship.getFriend_id());
+            jdbcTemplate.update(sql, userId, friendship.getFriendId());
         }
     }
 
     private void updateFriendshipsStatuses(Long userId, Set<Friendship> friendships) {
         String sql = "update friendships set is_confirmed = ? where user_id ? and friend_id = ?";
         for (Friendship friendship : friendships) {
-            jdbcTemplate.update(sql, friendship.isConfirmed(), userId, friendship.getFriend_id());
+            jdbcTemplate.update(sql, friendship.isConfirmed(), userId, friendship.getFriendId());
         }
     }
 }

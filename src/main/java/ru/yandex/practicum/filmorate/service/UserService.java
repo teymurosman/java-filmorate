@@ -40,7 +40,7 @@ public class UserService {
         User user = userStorage.getUserById(userId);
         userStorage.getUserById(friendId);
 
-        user.getFriends().add(Friendship.builder().friend_id(friendId).build());
+        user.getFriends().add(Friendship.builder().friendId(friendId).build());
         userStorage.update(user);
 
         return user;
@@ -50,7 +50,7 @@ public class UserService {
         User user = userStorage.getUserById(userId);
         userStorage.getUserById(friendId);
 
-        user.getFriends().remove(Friendship.builder().friend_id(friendId).build());
+        user.getFriends().remove(Friendship.builder().friendId(friendId).build());
         userStorage.update(user);
 
         return user;
@@ -58,7 +58,7 @@ public class UserService {
 
     public List<User> getFriends(Long userId) {
         return userStorage.getUserById(userId).getFriends().stream()
-                .map(f -> userStorage.getUserById(f.getFriend_id()))
+                .map(f -> userStorage.getUserById(f.getFriendId()))
                 .collect(Collectors.toList());
     }
 
@@ -68,7 +68,7 @@ public class UserService {
 
         return friendsOfFirstUser.stream()
                 .filter(friendsOfSecondUser::contains)
-                .map(f -> userStorage.getUserById(f.getFriend_id()))
+                .map(f -> userStorage.getUserById(f.getFriendId()))
                 .collect(Collectors.toList());
     }
 

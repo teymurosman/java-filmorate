@@ -6,10 +6,10 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"friend_id"})
+@EqualsAndHashCode(of = {"friendId"})
 public class Friendship {
 
-    private Long friend_id;
+    private Long friendId;
 
     @Builder.Default
     private boolean isConfirmed = false;
