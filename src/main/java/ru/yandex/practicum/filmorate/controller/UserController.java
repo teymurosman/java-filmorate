@@ -41,7 +41,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Long id) {
-        log.info("Поступил запрос на получение пользователя по id = {}.", id);
+        log.info("Поступил запрос на получение пользователя по id={}.", id);
         return userService.getUserById(id);
     }
 

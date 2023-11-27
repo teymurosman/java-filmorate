@@ -14,19 +14,19 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
-public class User extends AbstractEntity {
+public class User extends AbstractEntity<Long> {
 
-    @Email(regexp = ".+[@].+[\\.].+")
+    @Email(regexp = ".+[@].+[\\.].+", message = "email должен соответствовать формату xxx@xx.x")
     private String email;
 
-    @NotBlank
-    @Pattern(regexp = "\\S+")
+    @NotBlank(message = "логин не может быть пустым или содержать пробелы")
+    @Pattern(regexp = "\\S+", message = "логин не может быть пустым или содержать пробелы")
     private String login;
 
     private String name;
 
-    @PastOrPresent
+    @PastOrPresent(message = "дата рождения не может быть в будущем")
     private LocalDate birthday;
 
-    private final Set<Long> friends = new HashSet<>();
+    private final Set<Friendship> friends = new HashSet<>();
 }

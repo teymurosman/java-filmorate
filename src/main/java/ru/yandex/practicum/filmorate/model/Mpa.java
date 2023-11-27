@@ -6,10 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Data
-@EqualsAndHashCode(of = {"id"})
-@NoArgsConstructor
 @SuperBuilder
-public class AbstractEntity<T> {
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class Mpa extends AbstractEntity<Integer> {
 
-    private T id;
+    private String name;
 }

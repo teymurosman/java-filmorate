@@ -1,26 +1,23 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.DataNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class FilmService {
 
+    @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-    }
 
     public List<Film> getAll() {
         return filmStorage.getAll();
@@ -43,6 +40,8 @@ public class FilmService {
         userStorage.getUserById(userId); // Валидация существования пользователя
 
         film.getLikes().add(userId);
+        filmStorage.update(film);
+
         return film;
     }
 
@@ -52,6 +51,7 @@ public class FilmService {
 
         if (film.getLikes().contains(userId)) {
             film.getLikes().remove(userId);
+            filmStorage.update(film);
             return film;
         } else {
             throw new DataNotFoundException(String.format("Пользователь с id=%s не ставил лайк фильму с id=%s.", userId,
